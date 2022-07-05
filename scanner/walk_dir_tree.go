@@ -202,9 +202,21 @@ func getIgnoreGlobs(currentFolder string) (globs []string) {
 	return globs
 }
 
+// getAllIgnoreGlobs consolidates all ignore rules traversing root to dirPath.
 func getAllIgnoreGlobs(dirPath, root string) (globs []string) {
-	for nextDir := dirPath; dirPath != root && nextDir != "."; nextDir = filepath.Dir(nextDir) {
+	rel, err := filepath.Rel(root, dirPath)
+	if err != nil {
+		return nil
+	}
+
+	// Start from the root and work towards dirPath.
+	globs = getIgnoreGlobs(root)
+	dirs := strings.Split(rel, string(os.PathSeparator))
+	nextDir := root
+	for _, dir := range dirs {
+		nextDir := filepath.Join(nextDir, dir)
 		globs = append(globs, getIgnoreGlobs(nextDir)...)
 	}
+
 	return globs
 }
